@@ -5,8 +5,10 @@ class Carousel {
     /**
      * @param {HTMLElement} element
      * @param {object} options
-     * @param {object} options.slideToScroll Number of items to scroll
-     * @param {object} options.slideVisible Number of visible element in a slide
+     * @param {object} [options.slideToScroll=1] Number of items to scroll
+     * @param {object} [options.slideVisible=1] Number of visible element in a slide
+     * @param {boolean} [options.loop=false] must we buckle at the end of the slide
+
      */
 
 
@@ -14,16 +16,19 @@ class Carousel {
         this.element = element
         this.options = Object.assign({}, {
             slideToScroll: 1,
-            slideVisible: 1
+            slideVisible: 1,
+            loop: false
         }, options);
 
         let children = [].slice.call(element.children);
+        this.isMobile = false;
         this.currentItem = 0;
         this.root = this.createDivWithClass('carousel');
         this.container = this.createDivWithClass('carousel__container');
 
         this.root.appendChild(this.container);
         this.element.appendChild(this.root);
+        this.moveCallback = []
         this.items = children.map((child) => {
             let item = this.createDivWithClass('carousel__item');
 
@@ -33,6 +38,7 @@ class Carousel {
         })
         this.setStyle();
         this.createNavigation();
+        this.moveCallback.forEach(cb => cb(0))
     }
 
     /**
@@ -47,13 +53,31 @@ class Carousel {
         });
     }
 
+    /**
+     *
+     */
     createNavigation() {
-        let nextButton = this.createDivWithClass('carousel__next');
-        let prevButton = this.createDivWithClass('carousel__prev');
-        this.root.appendChild(nextButton);
-        this.root.appendChild(prevButton);
-        nextButton.addEventListener('click', this.next.bind(this));
-        nextButton.addEventListener('click', this.prev.bind(this));
+        let nextButton = this.createDivWithClass('carousel__next')
+        let prevButton = this.createDivWithClass('carousel__prev')
+        this.root.appendChild(nextButton)
+        this.root.appendChild(prevButton)
+        nextButton.addEventListener('click', this.next.bind(this))
+        prevButton.addEventListener('click', this.prev.bind(this))
+        if (this.options.loop === true) {
+            return
+        }
+        this.onMove(index => {
+            if (index === 0) {
+                prevButton.classList.add('carousel__prev--hidden')
+            } else {
+                prevButton.classList.remove('carousel__prev--hidden')
+            }
+            if (this.items[this.currentItem + this.options.slideVisible] === undefined) {
+                nextButton.classList.add('carousel__next--hidden')
+            } else {
+                nextButton.classList.remove('carousel__next--hidden')
+            }
+        })
     }
 
     next() {
@@ -70,10 +94,23 @@ class Carousel {
      * @param {number} index
      */
     gotoItem(index) {
+        if (index < 0) {
+            index = this.items.length - this.options.slideVisible;
+        } else if (index >= this.items.length || this.items[this.currentItem + this.options.slideVisible] === undefined && index > this.currentItem) {
+            index = 0
+        }
+        let translateX = index * -100 / this.items.length
 
-        let translateX = index * 100 / this.items.length
-        this.container.style.transform = 'translate3d(' + translateX + ' %, 0, 0)'
+        this.container.style.transform = 'translate3d(' + translateX + '%, 0, 0)';
         this.currentItem = index
+        this.moveCallback.forEach(cb => cb(index))
+    }
+
+    /**
+     * @param {Carousel-moveCallback} cb
+     */
+    onMove(cb) {
+        this.moveCallback.push(cb)
     }
 
 
@@ -88,13 +125,25 @@ class Carousel {
         return div
     }
 
+    get slidesToScroll () {
+
+    }
+
 }
 
 
 document.addEventListener('DOMContentLoaded', function () {
 
     new Carousel(document.querySelector('#carousel1'), {
-        slideVisible: 3
+        slideVisible: 3,
+        slideToScroll: 2,
+        loop: true
     })
 
+    new Carousel(document.querySelector('#carousel2'), {
+        slideVisible: 2,
+        slideToScroll: 2
+    })
+
+    new Carousel(document.querySelector('#carousel3'), {})
 })

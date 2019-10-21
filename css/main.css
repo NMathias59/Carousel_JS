@@ -93,7 +93,7 @@ CAROUSEL
     right: 0px;
     box-shadow: 0 15px 35px #3232321a, 0 5px 15px #0000001a;
     cursor: pointer;
-    transition: transform 0.3s;
+    transition: transform 0.3s, opacity 0.3s;
 }
 
 .carousel__next:hover, .carousel__prev:hover {
@@ -104,4 +104,8 @@ CAROUSEL
     background: url("left.svg");
     right: auto;
     left: -10px;
+}
+
+.carousel__next--hidden, .carousel__prev--hidden {
+    opacity: 0;
 }
